@@ -62,6 +62,8 @@ function solver(proofStatement) {
 			p = premise[x]
 			if( isImplication(p) ) {
 				premise[x] = applyImplication(p)
+			//	if(premise[x] == end) break;
+			if(premise[x] == '') premise[x].pop()
 				step[i++] = premise.slice(0)
 				rule.push('->')
 				//chat(premise)
@@ -70,6 +72,8 @@ function solver(proofStatement) {
 			}
 			if( isDemorgan(p) ) {
 				premise[x] = applyDemorgan(p)
+				//if(premise[x] == end) break;
+				if(premise[x] == '') premise[x].pop()
 				step[i++] = premise.slice(0)
 				rule.push('~~')
 				//chat(premise)
@@ -78,25 +82,43 @@ function solver(proofStatement) {
 			}
 		}
 		//chat(premise[p])
-	}
+		////////////////////////////////
+		// discuntive denial
 		for( var y in premise) {
 			for( var z in premise) {
 				if( premise[y] == premise[z] ) continue
 						
 				if( isDiscuntiveDenial(premise[z], premise[y]) ) {
-					chat(' . MATCHES . ')
-					premise.push(applyDiscuntiveDenial(premise[z], premise[y]))
-					step[i++] = premise.slice(0)
-					rule.push('disju')
+					//chat(' . MATCHES . ')
+					var pre = applyDiscuntiveDenial(premise[z], premise[y])
+					if(pre != undefined || pre != '') {
+						premise.push(pre)
+						step[i++] = premise.slice(0)
+						rule.push('disju')
+					}
+					if(pre == end) break;
+
 					simplifying = true
 				}
 			}
 		}
 
-	//chat( premise, ' |- ', end)
-	for(var each in step){
-//		chat( step[each], '\t' ,rule[each])
+		///////////////////////////////
+		if(premise.slice(-1) == end) break
+		if(i > 30 ) break		
 	}
+	
+	//step = step.join('*')
+
+	for(var each in step) {
+		chat(step[each])
+	}
+
+	//chat( premise, ' |- ', end)
+	//for(var each in step){
+		//chat( each, '|    ', step[each], '\t' ,rule[each])
+	//	chat(step)
+	//}
 
 
 }
@@ -106,46 +128,56 @@ function solver(proofStatement) {
 // A~B~A A|~B, ~A
 // ~A~BA ~A|~B A
 
-var disju_forms = {}
-disju_forms[''] 
-disju_forms[''] 
-disju_forms[''] 
-disju_forms[''] 
-disju_forms[''] 
-disju_forms[''] 
-disju_forms[''] 
-disju_forms[''] 
-
-
 function isDiscuntiveDenial(p, q) {
+	if(p == undefined || q == undefined) return 0
 	if(p.indexOf('~') == -1 && q.indexOf('~') == -1 ) return 0
-
+	var disju_forms = ["AB~A","~ABA","A~B~A","~A~BA"]
 
 	var s =p.split(/[^a-zA-Z\d\~:]/g)
 		,s = s.concat(q.split(/[^a-zA-Z\d\~:]/g))
 
-	chat(s)
+	if(s.length != 3) return 0
 
+	s[0] = s[0].replace(/[0-9]/,'A')
+	s[1] = s[1].replace(/[0-9]/,'B')
+	s[2] = s[2].replace(/[0-9]/,'A')
 
+	s=s.join('')
 
-
-
+	for(var i in disju_forms)
+		if(disju_forms[i]==s) return 1
+	return 0
 }
+function arrayUnique(a) {
+    return a.reduce(function(p, c) {
+        if (p.indexOf(c) < 0 && c != '' && c != undefined) p.push(c);
+        return p;
+    }, []);
+};
 function applyDiscuntiveDenial(p) {
-	
+	var s =p.split(/[^a-zA-Z\d\~:]/g)
+	//chat(p , s)
+	return s[1]
 }
 function isImplication(p) {
-	return ( p.indexOf('->') > -1 )
+	if(p != undefined)
+		return ( p.indexOf('->') > -1 )
+	return 0
 }
-function applyImplication(p)
-{
-	return '~' + p.replace(/\->/,'|')
+function applyImplication(p) {
+	if(p != undefined)
+		return '~' + p.replace(/\->/,'|')
+	return 0
 }
 function isDemorgan(p) {
-	return ( p.indexOf('~~') > -1 )	
+	if(p != undefined)
+		return ( p.indexOf('~~') > -1 )	
+	return 0
 }
 function applyDemorgan(p) {
-	return p.replace(/\~\~/,'')
+	if(p != undefined)
+		return p.replace(/\~\~/,'')
+	return 0
 }
 
 function andL(a,b) {
