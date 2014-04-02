@@ -76,35 +76,59 @@ function solver(proofStatement) {
 				simplifying = true
 				//continue
 			}
-
-			for( var y in premise) {
-				for( var z in premise) {	
-					if( isDiscuntiveDenial(premise[x], premise[y]) ) {
-						premise.push(applyDiscuntiveDenial(premise[x], premise[y]))
-						step[i++] = premise.slice(0)
-						rule.push('disju')
-						simplifying = true
-					}
+		}
+		//chat(premise[p])
+	}
+		for( var y in premise) {
+			for( var z in premise) {
+				if( premise[y] == premise[z] ) continue
+						
+				if( isDiscuntiveDenial(premise[z], premise[y]) ) {
+					chat(' . MATCHES . ')
+					premise.push(applyDiscuntiveDenial(premise[z], premise[y]))
+					step[i++] = premise.slice(0)
+					rule.push('disju')
+					simplifying = true
 				}
 			}
 		}
 
-		//chat(premise[p])
-	}
-
-
 	//chat( premise, ' |- ', end)
 	for(var each in step){
-		chat( step[each], '\t' ,rule[each])
+//		chat( step[each], '\t' ,rule[each])
 	}
 
 
 }
+// A|B , ~A |- B
+// AB~A  A|B, ~A
+// ~ABA  ~A|B, A
+// A~B~A A|~B, ~A
+// ~A~BA ~A|~B A
+
+var disju_forms = {}
+disju_forms[''] 
+disju_forms[''] 
+disju_forms[''] 
+disju_forms[''] 
+disju_forms[''] 
+disju_forms[''] 
+disju_forms[''] 
+disju_forms[''] 
+
+
 function isDiscuntiveDenial(p, q) {
-var dis = {}
-dis['p']
-dis['q']
-dis['~p']
+	if(p.indexOf('~') == -1 && q.indexOf('~') == -1 ) return 0
+
+
+	var s =p.split(/[^a-zA-Z\d\~:]/g)
+		,s = s.concat(q.split(/[^a-zA-Z\d\~:]/g))
+
+	chat(s)
+
+
+
+
 
 }
 function applyDiscuntiveDenial(p) {
@@ -185,7 +209,8 @@ function chat(){
 	var argsv = chat.arguments
 	var s=""
 	for(var ea in argsv)
-		s += argsv[ea] + " "
+		if(argsv[ea] != undefined)
+			s += argsv[ea] + " "
 	console.log(s)
 }
 function solvtest() {
