@@ -62,65 +62,49 @@ function solver(proofStatement) {
 			p = premise[x]
 			if( isImplication(p) ) {
 				premise[x] = applyImplication(p)
-			//	if(premise[x] == end) break;
-			if(premise[x] == '') premise[x].pop()
 				step[i++] = premise.slice(0)
 				rule.push('->')
-				//chat(premise)
 				simplifying = true
-				//continue
 			}
 			if( isDemorgan(p) ) {
 				premise[x] = applyDemorgan(p)
-				//if(premise[x] == end) break;
 				if(premise[x] == '') premise[x].pop()
 				step[i++] = premise.slice(0)
 				rule.push('~~')
-				//chat(premise)
 				simplifying = true
-				//continue
 			}
 		}
-		//chat(premise[p])
+
 		////////////////////////////////
 		// discuntive denial
+		var last_pre = 0
 		for( var y in premise) {
 			for( var z in premise) {
 				if( premise[y] == premise[z] ) continue
 						
 				if( isDiscuntiveDenial(premise[z], premise[y]) ) {
-					//chat(' . MATCHES . ')
-					var pre = applyDiscuntiveDenial(premise[z], premise[y])
-					if(pre != undefined || pre != '') {
+
+					var pre = applyDiscuntiveDenial(premise[z])
+
+					if(pre != undefined || pre != " ") {
+						if(last_pre == pre) break
 						premise.push(pre)
+						premise = arrayUnique(premise)
 						step[i++] = premise.slice(0)
 						rule.push('disju')
+						simplifying = true
+						if(pre == end) simplifying=0;
 					}
-					if(pre == end) break;
-
-					simplifying = true
 				}
 			}
 		}
-
 		///////////////////////////////
-		if(premise.slice(-1) == end) break
 		if(i > 30 ) break		
 	}
 	
-	//step = step.join('*')
-
 	for(var each in step) {
-		chat(step[each])
+		chat( each, '|    ', step[each], '\t' ,rule[each])
 	}
-
-	//chat( premise, ' |- ', end)
-	//for(var each in step){
-		//chat( each, '|    ', step[each], '\t' ,rule[each])
-	//	chat(step)
-	//}
-
-
 }
 // A|B , ~A |- B
 // AB~A  A|B, ~A
@@ -155,9 +139,9 @@ function arrayUnique(a) {
     }, []);
 };
 function applyDiscuntiveDenial(p) {
-	var s =p.split(/[^a-zA-Z\d\~:]/g)
-	//chat(p , s)
-	return s[1]
+	var s =p.split(/\|/g)
+		return s[1]
+	return s[0]
 }
 function isImplication(p) {
 	if(p != undefined)
