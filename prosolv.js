@@ -22,15 +22,14 @@ function Predicate() {
 		if(p.length == 1) {
 			this.sign= ' '
 			this.key = p
-			this.val = '?'
 		}
 		else
 		{
 			p=p.split('')
 			this.sign= '~'
 			this.key = p[1]
-			this.val = '?'	
 		}
+		this.val = '?'
 	};
 	this.get = function() {
 		if(this.sign == '~')
@@ -43,7 +42,7 @@ function Premise() {
 	this.predct = []
 	this.predct[0]=''
 	this.connective = []
-	this.primary_op=''
+	this.cardinality=''
 	this.mask=''
 	this.original=''
 	this.init = function(p){
@@ -52,7 +51,7 @@ function Premise() {
 		this.mask = p.replace(/[A-Za-z\~]+/g,'_')
 		this.predct=p.replace(/[^A-Za-z\~]+/g,',').replace(/,+$/, "").split(/,/)
 		this.original = p
-
+		this.cardinality = this.predct.length
 		if(ty.indexOf('->')>= 0) this.connective.push('->')
 		if(ty.indexOf('&') >= 0) this.connective.push('&')
 		if(ty.indexOf('|') >= 0) this.connective.push('|')
@@ -61,8 +60,14 @@ function Premise() {
 		//chat(this.predct, this.type)
 	};
 	this.get = function(){
-		//return this.original + '\t:: ' + this.connective + '\t ' + this.predct + ' ::mask:: ' + this.mask 
 		return this.original
+	}
+	this.deep= function(){
+		var s=[]
+		for(var ea in this.predct) {
+			s.push(this.predct[ea].get())
+		}
+		return this.original + '\t:' + this.connective + '\t:[' + this.identity + ']' + s + '\t:' + this.mask 
 	}
 };
 Predicate.prototype.negate = function() {
@@ -79,17 +84,36 @@ Premise.prototype = {
 
 function try_case(p, e) {
 	//chat(p[0].get(), e.get())
+	//deepPrint(p)
 	for(var x in p)
 		for(var y in p)
 		{
+			if(p[y]==p[x]) continue
 			var pair = []
-			pair.push(p[x], p[y])
-			chat(pair[0].get(), pair[1].get())
-		}
+			pair.push([p[x], p[y], (p[x].get() +','+p[y].get())])
+
+
+			pred_match( pair[pair.length-1] )
+			return
+			//chat(pair[0].get(), pair[1].get(), pair[2])
+		}		
+}
+
+function pred_match(p) {
+	var full = p[p.length-1]
+	p.pop()
+
+	chat(full)
+	for(var ea in p) {
+		chat( p[ea].get() )
+	}
 
 
 
-		
+
+
+
+	//chat(  p[0].get() )
 }
 
 function begin_solution(statement) {
@@ -120,4 +144,9 @@ function emerge(s, try_case) {
 		}
 	}
 	try_case(prem, end)
+}
+function deepPrint(ea) {
+for(var ch in ea )
+	chat(ea[ch].deep());
+
 }
