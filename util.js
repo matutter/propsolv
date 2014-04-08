@@ -28,5 +28,12 @@ module.exports = {
 				s += argsv[ea] + " " 
 		}
 		console.log(s)
-  }
+  },
+  solidify: function solidify(ary) {
+	for(var i in ary) {
+		if(ary[i] == undefined || ary[i] == '')
+			ary.splice(i,1)
+	}
+	return ary
+	}
 };
