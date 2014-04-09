@@ -1,6 +1,21 @@
 var chat = require('./util.js').chat
+
+
+module.exports = {
+	begin_solution: function begin_solution(statement) {
+		chat(statement)
+		chat('------------------------------')
+		return convert_to_object(statement, try_case)
+	}
+};
+
+
 //var input = '(x&s)->(p&q&(X|Y))->(a|b),(x&s),((A&a)|b)->b,~q->~r,s->q,r,~p|-q'
-var input = '~q->~r,r,~r,q->~q|-~q'
+//var input = '~q->~r,r,~r,q->~q,(q&p),~~p,(q&p)&p,((q&p)&p)&(p&q)|-~q'
+
+//var input = 'q->r,~~~r,q|p|-p'
+
+var input = '(a|b)->q,~q|-~(a|b)'
 
 //test('(a)->(x&s)->(b)->(p&q&(X|Y))->(a|b)')
 var c_ary = ["->","&","|"];
@@ -12,157 +27,201 @@ connection_name[c_ary[2]] = 'or'
 
 var Axiom = {}
 Axiom['_->_,_'] = resolution
-Axiom['_|_,_'] = 0
-Axiom['_->_,_->_'] = 0
-Axiom['_&_'] = 0
-Axiom['_,_'] = 0
+Axiom['_|_,_'] = disjunctive
+Axiom['_->_,_->_'] = undefined
+Axiom['_&_'] = undefined
+Axiom['_,_'] = undefined
 Axiom['_'] = demorgans
-Axiom[''] = 0
+Axiom[''] = undefined
 
-var used_products = {}
+var  ref = []
+	, back_ref = []
+	, replacement = []
+	, ref_index = 1
+	, steps = []
+	, step_count = 0
 
+///////////////////////////////////////////////////////
+// functions that return strings as a result of 
+// a succesful axiom application
+function disjunctive(p,q) {
+//p | q, ~p |- q
+	var new_pred
+	if(p.predct[0].key == q.predct[0].key) {
+		if(p.predct[0].sign == q.predct[0].sign)
+			return undefined
+		chat('------------------------------ DISJUNCTION')
+		new_pred = p.predct[1]
+		return new_pred.get()		
 
-function demorgans(p) {
-	var l1, l2, 
-	l1 = p.get().length
-	p = p.get().replace('~~','')
+	}
+
+	return undefined
+}
+
+function demorgans(p) { 
+	var l1, l2, po = p
+	l1 = p.length
+	p = p.replace(/\~\~/g,'')
 	l2 = p.length
-	if(l1 != l2) p = demorgans(p)
-	var use = new Premise
-	use.init(p)
-	chat(use.get())
-	return use
+	if(l1 != l2) { 
+		chat('------------------------------ Demorgans', po, p)
+		p = demorgans(p)
+	}
+	return p
 }
 
 function resolution(p,q) {
-	//chat( p.original, q.original )
+	// chat( p.original, q.original )
 	var new_pred
 	// DETACHMENT
 	if(p.predct[0].get == q.predct[0].get) {
-		chat( 'DETACHMENT' )
-
+		chat('------------------------------ Detachment')
+		return p.predct[1].get()
 	}
 	// DENIAL
 	else if(p.predct[1].key == q.predct[0].key) {
-		if(p.predct[1].sign == q.predct[0].sign) return 0
-		chat('----------- DENIAL')
+		if(p.predct[1].sign == q.predct[0].sign)
+			return undefined
+		chat('------------------------------ DENIAL')
 		new_pred = p.predct[0]
 		new_pred.negate()
 		return new_pred.get()		
 	}
 
-	return 0
-		//chat( p.original, q.original )
-		
+	return undefined
 }
-
-function try_case(p, e, ref, back_ref) {
+// END AXIOM FUNCTIONS
+////////////////////////////////////////////////////////////
+function try_case(p, end) {
 	//deepPrint(p)
 
-
+	//listAll(p)
 	var pair
-	var new_prem = 0
+	var last = p.length
+	var noRepeat = {}
 	for(var x in p)
+	{
+		noRepeat[p[x].get()] = 1
 		for(var y in p)
 		{
-			//if(p[x]==p[y]) continue
-			//if(used_products[p[x].original , p[y].original] == undefined)
-			//	used_products[p[x].original , p[y].original] = true
-			//else continue
-			chat(p[x].get(), p[y].get())
-			pair = [p[x].mask , p[y].mask]
-			new_prem = 0
+			noRepeat[p[y].get()] = 1
+			if(p[x]==p[y]) // SINGLE PREMISE AXIOM
+			{
+				pair = p[x].mask
 
-			if(typeof Axiom[pair] === 'function')
-				new_prem = Axiom[pair](p[x],p[y])
-			
-			if(new_prem == 0) continue
+				if(typeof Axiom[pair] === 'function') {
+					var new_prem = Axiom[pair](p[x].get())
 
+					if( new_prem == 0 )			continue // no bad ref
+					if( new_prem == undefined )	continue // no bad application
+					if( noRepeat[new_prem] == 1)continue // new premises only
 
+					steps.push(new_prem)
 
-			var new_p = new Premise;
-			new_p.init(new_prem)
-			p.push(new_p)
-
-			chat( new_p.get() )
-
-			//if(new_prem != 0) {
-			//	chat(new_prem.get())
-			//	p.push(new_prem)
-			//	x = y = 0
-			//}
-		}
-
-	//deepPrint(p)
-}
-
-
-
-function begin_solution(statement) {
-	chat(statement)
-	chat('------------------------------')
-	data = emerge(statement, try_case)
-	//try_case(data[0], data[1])
-}
-//convert string into usable objects
-function emerge(s, try_case) {
-	var end 
-	,	hold=s.split('|-')
-	,	premise=hold[0].replace(/[^A-Za-z\~\,\&\|\s(->):]/g,'').split(',')
-	end = new Predicate
-	end.init(hold[1])
-
-	var prem = []
-		, ref = []
-		, back_ref = []
-		, replacement = []
-		, ref_index = 0
-
-	for(var p in premise){
-		//chat(  premise[p]  )
-
-		replacement = parenthesis_parse(premise[p]) 
-		if( replacement != undefined ) {
-			for( var r in replacement ) {
-				if( ref[replacement[r]] == undefined  ) {
-					premise[p] = premise[p].replace(replacement[r],ref_index)
-					ref[replacement[r]] = ref_index
-					back_ref[ref_index] = replacement[r]
-					ref_index++
+					p[++last] = new Premise
+					p[last].init(new_prem)
+					x = y = 0
+					if(end.get() == new_prem) {
+						chat( 'ALL DONE!', new_prem, '=', end.get() )
+						return	steps				
+					} 
 				}
-				else
-					premise[p] = premise[p].replace(replacement[r],ref[replacement[r]])
+			}
+			else //MULTI PREMISE AXIOM
+			{
+				pair = [p[x].mask , p[y].mask]
+				
+				if(typeof Axiom[pair] === 'function') {
+					var new_prem = Axiom[pair](p[x],p[y])
+					
+					if( new_prem == 0 )			continue
+					if( new_prem == undefined )	continue
+					if( noRepeat[new_prem] == 1)continue
+
+					steps.push(new_prem)
+
+					//chat( 'new', new_prem )
+					p[++last] = new Premise
+					p[last].init(new_prem)
+					x = y = 0
+					if(end.get() == new_prem) {
+						chat( 'ALL DONE!', new_prem, '=', end.get() )
+						return	steps				
+					} 
+				}
+			}
+		} // END Y 
+	} // END X
+	return steps
+	listAll( p )
+}
+
+/////////////////////////////////////////
+// takes strings and convers to premise
+// objects
+function convert_to_object(s, try_case) {
+	var end  = new Premise
+	,	hold = new Array
+	,	temp = new Array
+	hold = s.split('|-')
+	end.init(hold[1])
+	temp = hold[0].replace(/[^A-Za-z\~\,\&\|\s(->):]/g,',').split(',')
+
+	for(var n in temp) {
+		steps.push(temp[n])
+		hold = new Premise
+		hold.init(temp[n])
+		temp[n] = hold
+	}
+	return replace_reference(temp, end, try_case)
+}
+////////////////////////////////////////////
+// replaces complicated objects with a
+// reference id ex: ((x(x)x(x)x)) = 1
+function replace_reference(premise, end, try_case) {
+	premise.push(end)
+	for(var i in premise)
+	{
+		// ask the parser if the premise needs an index reference
+		var temp = parenthesis_parse( premise[i].get() )
+		// if not check next one 
+		if( temp === undefined ) continue
+		//chat( temp, 'will be indexed')
+
+		for(var ea in temp )
+		{
+			if(ref[temp[ea]] === undefined) 		//if the ref isn't created make it
+			{
+				ref[temp[ea]] = ref_index	
+				back_ref[ref_index] = temp[ea]
+
+				str = premise[i].get().replace(temp[ea],ref_index)
+				premise[i] = new Premise 
+				premise[i].init(str)
+
+				ref_index ++
+			}
+			else
+			{
+				str = premise[i].get().replace(temp[ea],ref[temp[ea]]) 			// if the ref is already created use it
+				premise[i] = new Premise 
+				premise[i].init(str)			
 			}
 		}
-
-
-		prem[p] = new Premise
-		prem[p].init( premise[p] )
-
-		//chat( premise[p] )
 	}
-
-	for(var p in prem) {
-		//chat(prem[p].get())
-		for(var each in prem[p].predct) {
-			var pred = prem[p].predct[each]
-			//chat( pred )
-			prem[p].predct[each] = new Predicate
-			prem[p].predct[each].init(pred)
-
-			//chat(prem[p].predct[each].get())
-		}
-	}
-	var ref_obj = [ref, back_ref]
-	try_case(prem, end, ref, back_ref)
+	end = premise[premise.length-1]
+	premise.pop()
+	chat( end.get() )
+	return try_case(premise, end)
 }
-// parenthesis_parse() returns an array of complex statements that cannot
-// be broken down easily
+
 function parenthesis_parse(p) {
 	// parser rules
 	// remove any unecessary parenthesis (a) = a
 	// count open and close parentheses 
 	// and when the count changes keep the start and copy to the last
+	if(p.length == 0) return undefined
 	var i = 0
 		, len = p.length
 		, p2 = p
@@ -171,16 +230,14 @@ function parenthesis_parse(p) {
 		if(p[i-1]=='('&&p[i+1]==')') {
 			 p.splice(i-1,1)
 			 p.splice(i,1)
-		
 		}
-	
+
 	var count = 0
 		,l_count = count
 		,first=0
 		,last =0
 		,free =true
 		,parts=[]
-
 	for(i=0;i<len;i++)
 	{
 		if(p[i] == '(') count++
@@ -203,9 +260,8 @@ function parenthesis_parse(p) {
 
 
 function deepPrint(ea) {
-for(var ch in ea )
-	chat(ea[ch].deep());
-
+	for(var ch in ea )
+		chat(ea[ch].deep());
 }
 
 // predct have the following
@@ -217,7 +273,10 @@ function Predicate() {
 	this.sign=''
 	this.key =''
 	this.init= function(p) {
-		if(p.length == 1) {
+		if(p.length == 0) {
+			return 0
+		}
+		else if(p.length == 1) {
 			this.sign= ''
 			this.key = p
 		} else {
@@ -228,7 +287,7 @@ function Predicate() {
 		}
 	};
 	this.get = function() {
-			return this.sign + this.key + ' Predicate '
+			return this.sign + this.key
 	};
 };
 function Premise() {
@@ -240,25 +299,34 @@ function Premise() {
 	this.original=''
 	this.ref_flag=0
 	this.init = function(p){
+
+		// The original string
+		this.original = p
+		// a mask that replaces predicates with _
+		this.mask     = p.replace(/[A-Za-z0-9\~]+/g,'_')
+		// each predicate as an object with a key and sign
+		this.predct   = p.replace(/[^A-Za-z0-9\~]+/g,',').replace(/,+$/, "").split(/,/)
+		this.cardinality = this.predct.length
+
+		for(var ea in this.predct) {
+			var temp = this.predct[ea]
+			this.predct[ea] = new Predicate
+			this.predct[ea].init(temp)
+		}
+
 		var i=0, hold=''
 		var ty = p.replace(/[A-Za-z\~\(\)]+/g,'')
-		this.mask     = p.replace(/[A-Za-z0-9\~]+/g,'_')
-		this.predct   = p.replace(/[^A-Za-z0-9\~]+/g,',').replace(/,+$/, "").split(/,/)
-		this.original = p
-		this.cardinality = this.predct.length
-		// can't access c_Ary global scope inside this
-		var c_ary = new Array('->','&','|')
 		for(var bin in c_ary) {
 			while(ty.indexOf(c_ary[bin])>= 0) { 
 				this.connective.push(c_ary[bin])
-				ty = ty.replace(c_ary[bin])
+				ty = ty.replace(c_ary[bin],'')
 				//chat ( c_ary[bin] )	
 			}			
 		}
-		if( this.connective[0] == undefined ) { this.connective.push('_') }
+		if( this.connective[0] == undefined ) { this.connective[0] = '_' }
 	};
 	this.get = function(){
-		return this.original + ' Premise '
+		return this.original
 	}
 	this.deep= function(){
 		var s=[]
@@ -280,5 +348,10 @@ Premise.prototype = {
 		return s		
 	}
 };
+function listAll(p) {
+	for(var i in p) {
+		chat(p[i].get())
+	}
+}
 
-begin_solution(input)
+//module.begin_solution(input)
