@@ -1,11 +1,19 @@
 var chat = require('./util.js').chat
 
-
 module.exports = {
 	begin_solution: function begin_solution(statement) {
 		chat(statement)
-		chat('------------------------------')
+		//chat('------------------------------')
 		return convert_to_object(statement, try_case)
+	},
+	clean_up: function clean_up() {
+		ref = []
+		back_ref = []
+		replacement = []
+		ref_index = 1
+		steps = []
+		step_count = 0
+
 	}
 };
 
@@ -40,6 +48,7 @@ var  ref = []
 	, ref_index = 1
 	, steps = []
 	, step_count = 0
+	, rule
 
 ///////////////////////////////////////////////////////
 // functions that return strings as a result of 
@@ -50,45 +59,44 @@ function disjunctive(p,q) {
 	if(p.predct[0].key == q.predct[0].key) {
 		if(p.predct[0].sign == q.predct[0].sign)
 			return undefined
-		chat('------------------------------ DISJUNCTION')
+		//chat('------------------------------ DISJUNCTION')
 		new_pred = p.predct[1]
 		return new_pred.get()		
 
 	}
-
 	return undefined
 }
-
 function demorgans(p) { 
 	var l1, l2, po = p
 	l1 = p.length
 	p = p.replace(/\~\~/g,'')
 	l2 = p.length
-	if(l1 != l2) { 
-		chat('------------------------------ Demorgans', po, p)
+	if(l1 != l2) {
+		rule = 'De Morgan\'s'
+		//chat('------------------------------ Demorgans', po, p)
 		p = demorgans(p)
 	}
 	return p
 }
-
 function resolution(p,q) {
 	// chat( p.original, q.original )
 	var new_pred
 	// DETACHMENT
 	if(p.predct[0].get == q.predct[0].get) {
-		chat('------------------------------ Detachment')
+		//chat('------------------------------ Detachment')
+		rule = 'Detachment'
 		return p.predct[1].get()
 	}
 	// DENIAL
 	else if(p.predct[1].key == q.predct[0].key) {
 		if(p.predct[1].sign == q.predct[0].sign)
 			return undefined
-		chat('------------------------------ DENIAL')
+		//chat('------------------------------ DENIAL')
+		rule = 'Denial'
 		new_pred = p.predct[0]
 		new_pred.negate()
 		return new_pred.get()		
 	}
-
 	return undefined
 }
 // END AXIOM FUNCTIONS
@@ -117,13 +125,13 @@ function try_case(p, end) {
 					if( new_prem == undefined )	continue // no bad application
 					if( noRepeat[new_prem] == 1)continue // new premises only
 
-					steps.push(new_prem)
+					addStep(new_prem, rule)
 
 					p[++last] = new Premise
 					p[last].init(new_prem)
 					x = y = 0
 					if(end.get() == new_prem) {
-						chat( 'ALL DONE!', new_prem, '=', end.get() )
+						//chat( 'ALL DONE!', new_prem, '=', end.get() )
 						return	steps				
 					} 
 				}
@@ -139,14 +147,14 @@ function try_case(p, end) {
 					if( new_prem == undefined )	continue
 					if( noRepeat[new_prem] == 1)continue
 
-					steps.push(new_prem)
+					addStep(new_prem, rule)
 
 					//chat( 'new', new_prem )
 					p[++last] = new Premise
 					p[last].init(new_prem)
 					x = y = 0
 					if(end.get() == new_prem) {
-						chat( 'ALL DONE!', new_prem, '=', end.get() )
+						//chat( 'ALL DONE!', new_prem, '=', end.get() )
 						return	steps				
 					} 
 				}
@@ -169,7 +177,7 @@ function convert_to_object(s, try_case) {
 	temp = hold[0].replace(/[^A-Za-z\~\,\&\|\s(->):]/g,',').split(',')
 
 	for(var n in temp) {
-		steps.push(temp[n])
+		addStep(temp[n], 'Premise')
 		hold = new Premise
 		hold.init(temp[n])
 		temp[n] = hold
@@ -212,7 +220,7 @@ function replace_reference(premise, end, try_case) {
 	}
 	end = premise[premise.length-1]
 	premise.pop()
-	chat( end.get() )
+	//chat( end.get() )
 	return try_case(premise, end)
 }
 
@@ -258,6 +266,15 @@ function parenthesis_parse(p) {
 	else return undefined
 }
 
+function addStep(new_step, rule) {
+var step = {
+	"order":step_count++,
+	"result":new_step,
+	"rule":rule
+}
+steps.push(step)
+chat(JSON.stringify(step))
+}
 
 function deepPrint(ea) {
 	for(var ch in ea )
