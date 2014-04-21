@@ -1,0 +1,271 @@
+body {margin: 0; font-size: 14px; color: #0775ab; line-height: 21px; font-family: 'avenirregular', sans-serif; }
+
+a {
+	color: #f9e19b;
+	-webkit-transition: 0.25s all ease;
+	-moz-transition: 0.25s all ease;
+	-o-transition: 0.25s all ease;
+	-ms-transition: 0.25s all ease;
+	transition: 0.25s all ease;
+}
+
+h1 {font-size: 48px; line-height: normal; }
+h2 {font-size: 29px; line-height: 35px; }
+h3 {font-size: 20px; }
+h4 {font-size: 14px; }
+
+.btn {border-radius: 2px; border: none; padding: 10px 25px; font-family: 'tide_sans600_bunny', sans-serif; font-size: 14px; text-transform: uppercase; } 
+.btn-primary {background: #0775ab; }
+.btn-primary:hover
+{
+	background-color: #044362;
+}
+.center {max-width: 1140px; margin: 0 auto; padding: 0 20px; }
+
+#intro {
+	background: #283e56;
+	min-height: 70px;
+	color: #fff;
+	padding: 27px 0;
+}
+
+#intro a {
+	color: #fff;
+}
+
+#intro .navbar {
+	border: none;
+}
+
+#intro .navbar-intro {
+	margin: 0;
+}
+
+#intro .navbar-brand {
+	padding: 0;
+	margin: 0;
+	min-width: 193px;
+	height: auto;
+	margin-top: 3px;
+	max-width: 193px;
+}
+
+#intro .nav a {
+	border: none;
+	background: none;
+	text-transform: uppercase;
+	font-size: 11px;
+	padding: 7px 20px;
+	border-radius: 5px;
+	border: 2px solid transparent;
+	margin-top: 4px;
+}
+
+#intro .nav a:hover {
+	color: #c7c7c7;
+}
+
+#intro .nav .start a {
+	border: 2px solid #f9e19b;
+}
+
+#intro .nav .start a:hover
+{
+	background-color: #f9e19b;
+	color: #333;
+}
+
+#intro .navbar-toggle {
+	background-color: #fff;
+	margin-right: 0;
+	margin-top: 5px;
+	padding: 8px 8px;
+	border-radius: 2px;
+}
+
+#intro .navbar-toggle .icon-bar
+{
+	background: #444;
+}
+
+
+#main #banner
+{
+	background: #3fb0e7
+	url(banner-bg2.png) repeat 0 0 fixed;
+	color: #fff;
+	overflow: hidden;
+	padding: 102px 0 205px;
+	position: relative;
+	min-height: 700px;
+}
+#banner
+{
+	padding: 51px 0 205px !important;	
+}
+.icon
+{
+	margin-left: 16px;
+	vertical-align: -6px;
+}
+.icon-right-arrow
+{
+	background-image: url(arrow-right.png);
+}
+
+textarea:focus, input[type="text"]:focus
+{   
+	border: 3px solid #283e56;
+	background-color: rgba(40,60,86,0.6);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(0, 0, 0, 0.6);
+	outline: 0 none;
+}
+
+
+
+.solvr-form, .solvr-form:active 
+{
+	background-color: rgba(40,60,86,0.2);
+	border: 3px solid #283e56;
+	color: white;
+	font-size: 2.2em;
+	font-weight: 700;
+	height: 3.0em;
+}
+.steps
+{
+	background-color: rgba(40,60,86,0.9);
+	border: 3px solid #283e56;
+	border-radius: 0px;
+	padding: 2px;
+	height: auto;
+	z-index: 1;
+}
+.solvr-btns
+{
+	text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.cloud1
+{
+	z-index: 0;
+	position: relative;
+	left: 85.7%;
+	top: 0px;
+	background-image: url(cloud2.png);
+	width: 109px;
+	height: 32px;
+}
+.mountain
+{
+	z-index: 0;
+	position: relative;
+	right: 0%;
+	top: -62px;
+	background-image: url(mountain2.png);
+	width: 829px;
+	height: 230;
+}
+.alert, .alert1
+{
+	text-align: center;
+}
+.alert1 {
+	position: absolute;
+	z-index: 0;
+	left: calc(50% - 200px);
+	width: 400px;
+}
+.list-steps
+{
+	z-index: 1;
+	font-size: 1.3em;
+	color: #FFF;
+}
+td
+{
+	border-color: #101822 !important;
+}
+.second
+{
+	margin-top: -200px;
+	color:#283E56;
+
+}
+.second a
+{
+	color:#7f2c29;
+}
+.about-fix
+{
+	margin-top: -62px;
+	background-color: #fff;
+}
+
+.page-header, blockquote h2
+{
+	border-color:#AAA; 
+	border-width: 0px;
+	padding: 0px;
+	margin: 0px;
+	color: #555;
+}
+blockquote
+{
+	border-color: #e1e1e8;
+	background-color: #f7f7f9;
+	box-shadow: 2px 2px 2px RGBA(0,0,0,0.3);
+	font-size: 16px;
+}
+.media-object
+{
+	font-size: 3.4em;
+	line-height: 1.0em;
+
+}
+blockquote table
+{
+	background-color: #FFF;
+	border: solid 1px #DDD; 
+}
+tr, td
+{
+	border-color: #DDD !important;
+}
+ex
+{
+	border:solid 1px #DDD;
+	background-color: #FFF;
+	color:#0775ab;
+	padding: 1px;
+	font-size: 15px;
+}
+ex .table>tbody>tr>td, ex .table>tbody>tr>th
+{
+	width: 25%;
+	border: solid 1px #DDD;
+	text-align: center;
+}
+.ex-fix
+{
+	border:none;
+	padding: 0px;
+	background-color: transparent;
+}
+.code 
+{
+	display: block;
+	width: 100%;
+}
+focus
+{
+	display: block;
+	text-align: center;
+}
+WIP
+{
+	color:#999;
+	text-decoration: line-through;
+}

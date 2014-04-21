@@ -1,0 +1,568 @@
+<html>
+<script type="text/javascript" src="socket.min.io"></script>
+<script type="text/javascript" src="jquery-1.11.0.min.js"></script>
+<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
+<script>
+
+	var luck = []
+	luck[0] = 'q->r,~~~r|-~q'
+	luck[1] = 'p->q,~q,~p|~r,r->p,r|-q'
+	luck[2] = 'p->q,p|-q'
+	luck[3] = 'p->q,~q|-p'
+	luck[4] = '~dog->cat,~dog|-cat'
+
+	var socket = io.connect()
+	var active = 'banner'
+	//SOCKET.IO EVENTS
+	socket.on('echo', function(res) {
+		var line = ""
+		res = JSON.parse(JSON.stringify(res))
+		line = '<tr><td class="col-sm-1" >' + res.order +'</td><td class="col-sm-8">'+ res.result +'</td><td class="col-sm-3">'+ res.rule + '</td></tr>'
+		$('.list-steps').append(line)
+	})
+	socket.on('state', function(res) {
+		res = res.replace(/\,/g,' , ').replace("|-"," |- ")
+		$('.case').empty().append('<h2 style="text-align:center;">' + res + '</h2>')
+	})
+	socket.on('reset', function(res) {
+		$('.list-steps').empty()
+	})
+	socket.on('error', function(res) {
+		$('.steps').empty()
+		$('.steps').append('<div class="alert alert-danger">'+res+'<strong> Solvr will reset</strong> </div')
+		//socket.disconnect()
+		//socket.socket.reconnect()
+		setTimeout(function(){
+			window.location.reload(1);
+		}, 3000);
+	})
+
+	$( document ).ready(function() {
+		$( rotateExample )
+		if(window.location.hash) {
+			var hash = window.location.hash.substring(1);
+			if(hash == "slideSolver") {
+				$('.intro').hide()
+				$('.solution').hide()
+				$('.navbar-nav,li:nth-child(2)').addClass('start').siblings().removeClass('start')
+				active = 'solver'
+			}
+			else
+			{
+				active = 'banner'
+				$('.center.solvr').hide()
+				$('.solution').hide()
+				$('.intro').show()					
+			}
+		} else {
+			active = 'banner'
+			$('.center.solvr').hide()
+			$('.solution').hide()	
+			$('.intro').show()
+		}
+		$(this).scrollTop(0);
+		$('.navbar-nav,li').click(function(){
+			$(this).addClass('start').siblings().removeClass('start')
+		})
+		$('a#tosolvr').click(function(){
+			if(active=='solver') return
+			active = 'solver'
+			$('li#tosolvr').addClass('start').siblings().removeClass('start')
+			$('.intro').fadeToggle( "fast", function() {
+				$('.center.solvr').fadeToggle()
+			})
+		})
+		$('a#tobanner').click(function(){
+			if(active=='banner') return
+			active = 'banner'
+			$('.solution').hide()
+			$('.center.solvr').hide( "fast", function(){
+				$('.intro').fadeToggle()				
+			})
+		})
+		$('#goSolveNow').click(function(){
+			var s = $('.solvr-form').val()
+			var exp1 = new RegExp("[0-9]");
+			var exp2 = ["|","&","->"]
+			$('.alert1').empty()
+			if(  exp1.test(s) ){
+				badInput()
+				$('.alert1').html("Error. Unacceptable symbol")
+				return
+			}
+			if( s.indexOf("|-") < 0 ) {
+				badInput()
+				$('.alert1').html("Error. Missing provability operator <strong>\" |- \"</strong>")
+				return
+			}
+			var complete = false
+			var s2 = s.split("|-")
+			s2 = s2[0]
+			for( var e in exp2 )
+				if( s2.indexOf(exp2[e]) >= 0 )
+					complete = true
+			if (!complete)
+			{
+				badInput()
+				$('.alert1').html("Error. Nothing to solve for. </strong>")
+				return
+			}
+
+			$('#solution').siblings().hide()
+			$('#solution').show()
+
+			socket.emit('try', { "statement": s })
+		})
+		$('#goAgain').click(function(){
+			$('#solution').hide()		
+			$('.center.solvr').fadeToggle('fast')
+		})
+		$('#lucky').click(function(){
+			var n = Math.floor((Math.random()*100)%luck.length);
+			$('.solvr-form').empty()
+			$('.alert1').empty()
+			$('.solvr-form').val(luck[n])
+		})
+	})
+	function badInput() {
+		$( ".solvr-form" ).animate({
+			        backgroundColor: "rgba(86,41,40,0.9)",
+			        'borderColor': "#FF0000",
+			        color: "#fff"
+			    }, 100, function() {
+			    	$( ".solvr-form" ).animate({
+			        backgroundColor: "rgba(40,60,86,0.6)",
+			        'borderColor': "#283e56",
+			        color: "#fff"
+			    }, 500 );
+		} );
+	}
+
+</script>
+<title> Propsolvr </title>
+<author> Mathew C Utter | matutter.com | utterm@sunyit.edu | Propsolvr -v 1.0.0  </author>
+<link rel="stylesheet" type="text/css" href="bootstrap.css">
+<link rel="stylesheet" type="text/css" href="regular.css">
+<body>
+
+<header id="intro">
+	<nav class="navbar center" role="navigation">
+		<div class="navbar-header">
+			<a class="navbar-brand" href=""><img style="height:38px;" src="title5.png" alt="PropSolvr"></a>
+		</div>
+		<ul class="nav navbar-nav navbar-right">
+			<li class="start"><a href="#about" id="tobanner">About</a></li>
+			<li id="toSolvr"><a href="#slideSolver" id="tosolvr">Try Solvr</a></li>
+		</ul>
+	</nav>
+</header>
+
+<div id="main">
+
+	<section id="banner" class="">
+		<div class="center intro">
+			<div class="row">
+				<div class="col-sm-11">
+					<h1><span class="light">Solutions of the propositional case</span> <br> <strong>Click below to try it now!</strong></h1>
+					<p>Prosolvr will deduce the procedure for solving any predicate case<br> using several rules of inference.</p>
+					<div class="btns">
+						<a href="#slideSolver" class="btn btn-primary" id="tosolvr"> Try It now </a>
+						<a href="#about" class="btn" id="tobanner"> Learn More </a>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="solver" class="center solvr">
+		<div class="alert1"> </div>
+			<input type="text" class="form-control solvr-form">
+			<br>
+			<div class="center btns solvr-btns">
+				<a href="#slideSolver" class="btn btn-primary" id="goSolveNow"><strong>Solve now</strong></a>
+				<a href="#" class="btn" id="lucky"> I'm feeling lucky </a>
+			</div>
+		</div>
+
+		<div id="solution" class="center solution">
+
+			<div class="center btns solvr-btns">
+				<a href="#slideSolver" class="btn" id="goAgain"> Try another </a>
+			</div>
+			<div class="jumbotron steps">
+			<div class="case"></div>
+				<table class="table table-condensed list-steps" style="text-align:center;">
+
+
+				</table>
+			</div>
+		
+		</div>
+
+
+	</section>
+	<section class="second">
+		<div class="cloud1"></div>
+		<div class="mountain"></div>
+
+		<div class="jumbotron about-fix" id="about">
+			<h1>About the project</h1>
+			
+			<blockquote>
+				<div class="page-header"><h2>What is Propsolvr</h2></div>
+				<p>
+					<strong>P</strong>ropsolvr is a propositional solution calculator.
+					The software allows predicates to be represented by a single alpha character "A-Za-z" or a group of up to four characters in length. 
+					A propositional expression is composed of three parts.
+					<li>Two or more <strong>premises</strong> composed of <strong>predicates</strong> and separated by a comma "A, a, B, r"</li>
+					<li>One or more <strong>binary connectives</strong>. Either logical OR, logical AND, or an IMPLICATION "|, &, ->"</li>
+					<li>The <strong>provability operator</strong> "|-"</li>
+				</p>
+				<p>
+					A few Examples are available by pressing the "Feeling Lucky" button under the <a href="#intro" class="btn" id="tosolvr"> TRY SOLVR </a> tab.
+
+
+				</p>
+			</blockquote>
+
+			
+			<blockquote>
+				<div class="page-header"><h2>How it works</h2></div>
+				<p>
+					<strong>T</strong>he software is implemented as a <a href="http://nodejs.org/api/modules.html" > node module </a> which allows
+					the <a href="https://github.com/matutter/MAPS-Backend">MAPS</a> backend to serve solutions through the web.
+				</p>
+				<p>
+					Propsolvr uses a deterministic algorithm to find and apply axiom rules. Once the string has been deemed appropriate by the front end a message is sent to the server containing a single string. The String is the expression the user wishes to prove solvable. Each premise is extracted and converted into an object so that the algorithms may treat each premise in a more natural way. A cross product is created by mapping the list of premises onto itself and each resulting tuple, represented by a mask, is matched to the AXIOM object. The AXIOM object simply pairs tuple masks with a parsing function that determines if the tuple will satisfy the axiom. Once an axiom is satisfied a node is entered into a list. Eventually one of the nodes will be the premise you wish to determine the solvability for and a shortest path algorithm removes unnecessary nodes that don't lead to the determination in the shortest way. Once that's all done the server sends a series of messages for each node in the shortened list and the proof is constructed by the front end. 
+				</p>
+				<p>
+					<div class="media">
+					 	<div class="media-object pull-left">1</div>
+						<div class="media-body">
+							<h4 class="media-heading"><strong>Premise as an Object</strong></h4>
+							<table class="table">
+							<tbody>
+							<small>The Premise object is self-parsing, any string that can become a predicate will be converted by Premise.init()</small>
+								<tr>
+									<th>
+										Part
+									</th>
+									<th>
+										Description
+									</th>
+								</tr>
+								<tr>
+									<td>
+										predct
+									</td>
+									<td>
+										An array that stores each Predicate Object the Premise.init() constructor creates
+									</td>
+								</tr>
+								<tr>
+									<td>
+										cardinality
+									</td>
+									<td>
+										The number of unique predicates that a premise contains
+									</td>
+								</tr>
+								</tr>
+									<tr>
+									<td>
+										mask
+									</td>
+								</td>
+									<td>
+										A mask used to simplify handling a premise when attempting to match an axiom to a Premise or pair of Premises
+										<small style="display:inline;" >ex. p->q = _->_ </small>
+									</td>
+								</tr>								
+								<tr>
+									<td>
+										original
+									</td>
+									<td>
+										The original string with reference replacements
+									</td>
+								</tr>
+								<tr>
+									<td>
+										.init()
+									</td>
+									<td>
+										The "late" constructor for Premise Objects.	Get a string as an input variable and convert it into a premise. By parsing the original string Predicates are pulled out and created					
+									</td>
+								</tr>
+								<tr>
+									<td>
+										.get()
+									</td>
+									<td>
+										An accessor method to return Premise.original as a String							
+									</td>
+								</tr>
+							</tbody>
+							</table>
+
+
+						</div>
+					</div>
+					<div class="media">
+					 	<div class="media-object pull-left">2</div>
+						<div class="media-body">
+							<h4 class="media-heading"><strong>Predicate as an Object</strong></h4>
+							<table class="table">
+							<tbody>
+								<small>The Predicate object is self-parsing, any string that can become a predicate will be converted by Predicate.init()</small>
+								<tr>
+									<th>
+										Part
+									</th>
+									<th>
+										Description
+									</th>
+								</tr>
+								<tr>
+									<td>
+										key
+									</td>
+									<td>
+										The alpha or numeric reference character that represents the identity of a predicate
+									</td>
+								</tr>
+								<tr>
+									<td>
+										sign
+									</td>
+									<td>
+										The negation of the Predicate
+									</td>
+								</tr>
+								<tr>
+									<td>
+										.init()
+									</td>
+									<td>
+										The "late" constructor for a Predicate Object. Will construct the object by parseing a String
+									</td>
+								</tr>
+								<tr>
+								<td>
+									.get()
+								</td>
+								<td>
+									A accessor method to return Predicate.sign + Predicate.key as a String
+								</td>
+								</tr>
+							</tbody>
+						</table>
+						</div>
+					</div>
+						<div class="media">
+					 	<div class="media-object pull-left">3</div>
+						<div class="media-body">
+							<h4 class="media-heading"><strong>Replace Complexity with Reference</strong></h4>
+							Some propositional expressions may include complex logic that is nested in parentheses. That is complex because a determinalistic approach to finding a solution has to account for more items and rules.
+							<focus> ex. <ex>(k&(~t|t)|(~t&k)->(p&e))->(A)</ex> </focus>
+							Propsolv.replace_reference() is a method that, given a single or array of Premise Objects, will parse each for complex 
+							expressions and replace each complex nested piece with a numerical reference.
+							That reference is given a forward and backward reference entry in an associative array. Also unnecessary parenthesis are removed.
+							<focus> ex. <ex>(k&(~t|t)|(~t&k)->(p&e))->(A) </ex> = <ex> 1->A </ex> </focus>
+							<focus> <ex>ref['1'] = '(k&(~t|t)|(~t&k)->(p&e))->(A)' </ex></focus>
+							<focus> <ex>back_ref['(k&(~t|t)|(~t&k)->(p&e))->(A)'] = '1' </ex></focus>
+							This is so the AXIOM mask interpreter can properly identify the priority operation.
+							<WIP>Once a reference is disjunct and becomes it's own premise it may be replaced by it's original
+							or have its original expression evaluated to see if it may be simplified.</WIP>
+						</div>
+						<div class="media">
+					 	<div class="media-object pull-left">4</div>
+						<div class="media-body">
+							<h4 class="media-heading"><strong>Evaluate Cross Products</strong></h4>
+								Once a reference has been created a Premise's mask is updated. The Premise masks are combined into tuples and tested against the AXIOM object.
+								Matching cross products are treated as monads to see if the mask will satisfy some AXIOM by itself.
+								<br>
+<script>
+flip = true
+function rotateExample() {
+	var first = ['A->B,A->B','~B,~B','~A,~A','Duel']
+	var next  = ['A->B','~B','~A','Monad']
+
+	flip = !flip
+	if(flip) {
+		$("#cell1").text(first[0]).fadeIn().delay(2000).fadeOut(200 );		
+		$("#cell2").text(first[1]).fadeIn().delay(2000).fadeOut(200 );
+		$("#cell3").text(first[2]).fadeIn().delay(2000).fadeOut(200 );
+		$("#cell0").text(first[3]).fadeIn().delay(2000).fadeOut(200, rotateExample );
+	} 	
+	else {
+		$("#cell1").text(next[0]).fadeIn().delay(2000).fadeOut(200 );			
+		$("#cell2").text(next[1]).fadeIn().delay(2000).fadeOut(200 );
+		$("#cell3").text(next[2]).fadeIn().delay(2000).fadeOut(200 );
+		$("#cell0").text(next[3]).fadeIn().delay(2000).fadeOut(200, rotateExample );
+	}
+
+
+}
+</script>
+								<ex class="ex-fix">
+									<table class="table">
+										<tbody>
+										<tr>
+											<th id="cell0">
+												Monad
+											</th>
+											<th>
+												A->B
+											</th>
+											<th>
+												~B
+											</th>
+											<th>
+												A
+											</th>
+										</tr>
+										<tr>
+											<th>
+												A->B
+											</th>
+											<td id="cell1">
+												A->B,A->B
+											</td>
+											<td>
+												A->B,~B
+											</td>
+											<td>
+												A->B,A
+											</td>
+										</tr>
+										<tr>
+											<th>
+												~B
+											</th>
+											<td>
+												~B,A->B
+											</td>
+											<td id="cell2">
+												~B,~B
+											</td>
+											<td>
+												~B,A
+											</td>
+										</tr>
+										<tr>
+											<th>
+												A
+											</th>
+											<td>
+												A,A->B
+											</td>
+											<td>
+												A,~B
+											</td>
+											<td  id="cell3">
+												A,A
+											</td>
+										</tr>
+									</tbody>
+								</table>
+								</ex>
+									A tuple will then be in the form of a String such as <ex>_->_,_</ex> which could satisfy a number of different Axioms.
+									The mask character <ex>_</ex> represents any non-complex part of a premise.
+									<br>
+									Finding which function to use to parse a premise is done by calling a function as an element of an associative array.
+									This is done as follows. <br>
+									<ex class="code" style="white-space:pre;">
+<!-- breaking from the coding standard-->	if( typeof AXIOM['_->_,_'] === "function" ) {
+<!-- breaking from the coding standard-->		AXIOM['_->_,_'](tuple) 
+<!-- breaking from the coding standard-->	}
+<!-- breaking from the coding standard-->
+<!-- breaking from the coding standard--></ex>
+									<br>
+									Each time a successful axiom is applied the resulting premise is added to the list of all Premises and the cross product
+									process must start over to evaluate each new tuple.
+									It's possible to have duplicate results from multiple satisfied AXIOMS this leads to unnecessary products. 
+									To avoid the consequences of this, the algorithm checks an associative array for every successful AXIOM. 
+									Only results that are not yet defined in this array are entered into this Object and in the Step Object which is used to generate the final sequence of steps toward a solution.								
+							</div>
+						</div>
+					<div class="media">
+					 	<div class="media-object pull-left">5</div>
+						<div class="media-body">
+							<h4 class="media-heading"><strong>Finding Shortest Path</strong></h4>
+							After a Premise Object is generated from a successful AXIOM that is equivalent to the Premise Object on the right side of the provability operator.
+							Propsolvr will move onto the final phase of solution generation; a shortest path algorithm that traces back the last entry in the Step Object by it's parents.
+							The Step Object is essentially a <a href="http://en.wikipedia.org/wiki/Skip_list">skip list</a>. One of the paths will lead back to one or more of the initial Premise Objects, thus
+							the shortest path in solving a proof is the shortest path of that skip list.
+							<br>
+							<strong>Step as an Object</strong>
+							<table class="table">
+								<tbody>
+									<tr>
+										<th>
+											Part
+										</th>
+										<th>
+											Description
+										</th>
+									</tr>
+									<tr>
+										<td>
+											order
+										</td>
+										<td>
+											The identification number of a step
+										</td>
+									</tr>
+									<tr>
+										<td>
+											result
+										</td>
+										<td>
+											The String containing the value of the premise
+										</td>
+									</tr>
+									<tr>
+										<td>
+											rule
+										</td>
+										<td>
+											The name of the axiom the AXIOM Object gives a successful AXIOM application 
+										</td>
+									</tr>
+									<tr>
+										<td>
+											isBase
+										</td>
+										<td>
+											A flag set to '0' for initial premises from the initial expression. Set to non-'0' for anything else
+										</td>
+									</tr>
+									<tr>
+										<td>
+											source_p
+										</td>
+										<td>
+											The parent(s) premise's Step.order the step was a result of
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+					</div>
+				</p>
+				<footer> MAPS works on a set of software such as socket.io, Node.js, and Bootstrap </footer>
+			</blockquote>
+		
+		</div>
+
+
+	</section>
+
+</div>
+
+
+
+</body></html>
