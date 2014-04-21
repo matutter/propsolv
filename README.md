@@ -1,4 +1,4 @@
 propsolv
 ========
 
-A JavaScript propositional calculus solution library
+A JavaScript propositional calculus solution node module
